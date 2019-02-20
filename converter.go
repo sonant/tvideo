@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -113,6 +114,15 @@ func converter(id string) (string, error) {
 		return "", err
 	}
 	time.Sleep(time.Millisecond * 1000)
+	if strings.Contains(videoURL.Track.PlaybackURL, ".mp4") {
+		convert := exec.Command("ffmpeg", "-i", videoURL.Track.PlaybackURL, "-c", "copy", "./videos/"+id+".mkv")
+		convert.Stdout = os.Stdout
+		convert.Stderr = os.Stderr
+		if convert.Run() != nil {
+			return "", err
+		}
+		return id, nil
+	}
 	videDescription, err := client.Get(videoURL.Track.PlaybackURL)
 	if err != nil {
 		return "", err

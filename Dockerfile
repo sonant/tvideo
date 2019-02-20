@@ -1,6 +1,6 @@
 FROM ubuntu
 
-ADD main /opt/app
+COPY main /opt/app
 
 RUN apt-get update && \
     apt-get install -y ffmpeg && \
