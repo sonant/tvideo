@@ -8,4 +8,5 @@ RUN apt-get update && \
 
 EXPOSE 8080
 
-CMD ./opt/app
+WORKDIR /opt
+CMD ./app
