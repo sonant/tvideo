@@ -113,7 +113,9 @@ func converter(id string) (string, error) {
 	if err := json.Unmarshal(b, &videoURL); err != nil {
 		return "", err
 	}
+
 	time.Sleep(time.Millisecond * 100)
+	//jpg/mp4 convert
 	if strings.Contains(videoURL.Track.PlaybackURL, ".mp4") {
 		convert := exec.Command("ffmpeg", "-i", videoURL.Track.PlaybackURL, "-c", "copy", "./videos/"+id+".mkv")
 		convert.Stdout = os.Stdout
@@ -123,14 +125,12 @@ func converter(id string) (string, error) {
 		}
 		return id, nil
 	}
+
 	videDescription, err := client.Get(videoURL.Track.PlaybackURL)
 	if err != nil {
 		return "", err
 	}
-	// b, err = ioutil.ReadAll(videDescription.Body)
-	// if err != nil {
-	// 	logger.Fatalln(err)
-	// }
+
 	time.Sleep(time.Millisecond * 100)
 	scanner := bufio.NewScanner(videDescription.Body)
 	for scanner.Scan() {
