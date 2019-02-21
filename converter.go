@@ -38,7 +38,7 @@ type Track struct {
 
 func converter(id string) (string, error) {
 	_ = os.Remove("./videos/" + id + ".mkv")
-	time.Sleep(time.Millisecond * 1000)
+	time.Sleep(time.Millisecond * 100)
 	// Get bearer
 	resp, err := client.Get("https://twitter.com/i/videos/tweet/" + id)
 	if err != nil {
@@ -85,7 +85,7 @@ func converter(id string) (string, error) {
 	// }
 
 	// Get video parameters
-	time.Sleep(time.Millisecond * 1000)
+	time.Sleep(time.Millisecond * 100)
 	url, _ := url.Parse("https://api.twitter.com/1.1/videos/tweet/config/" + id + ".json")
 	request := &http.Request{
 		Method: "GET",
@@ -113,7 +113,7 @@ func converter(id string) (string, error) {
 	if err := json.Unmarshal(b, &videoURL); err != nil {
 		return "", err
 	}
-	time.Sleep(time.Millisecond * 1000)
+	time.Sleep(time.Millisecond * 100)
 	if strings.Contains(videoURL.Track.PlaybackURL, ".mp4") {
 		convert := exec.Command("ffmpeg", "-i", videoURL.Track.PlaybackURL, "-c", "copy", "./videos/"+id+".mkv")
 		convert.Stdout = os.Stdout
@@ -131,7 +131,7 @@ func converter(id string) (string, error) {
 	// if err != nil {
 	// 	logger.Fatalln(err)
 	// }
-	time.Sleep(time.Millisecond * 1000)
+	time.Sleep(time.Millisecond * 100)
 	scanner := bufio.NewScanner(videDescription.Body)
 	for scanner.Scan() {
 		t := scanner.Text()
