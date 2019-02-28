@@ -36,6 +36,11 @@ type Track struct {
 	} `json:"track"`
 }
 
+//Tg struct for recive guest token
+type Gt struct {
+	GuestToken string `json:"guest_token"`
+}
+
 func converter(id string) (string, error) {
 	_ = os.Remove("./videos/" + id + ".mkv")
 	time.Sleep(time.Millisecond * 100)
@@ -70,27 +75,64 @@ func converter(id string) (string, error) {
 	}
 	logger.Infoln(bearer)
 
-	// // Not need
+	var personalization_id, guest_id string
+	cookies := resp.Cookies()
+	for _, cookie := range cookies {
+		if cookie.Name == "personalization_id" {
+			personalization_id = cookie.Value
+		}
+		if cookie.Name == "guest_id" {
+			guest_id = cookie.Value
+		}
+	}
+
 	// // Get Activation
 	// time.Sleep(time.Millisecond * 1000)
-	// url, _ := url.Parse("https://api.twitter.com/1.1/guest/activate.json")
+	url, _ := url.Parse("https://api.twitter.com/1.1/guest/activate.json")
 	// request := &http.Request{
 	// 	Method: "POST",
 	// 	URL:    url,
-	// 	Header: http.Header{"user-agent": []string{"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36"}, "accept-encoding": []string{"gzip", "deflate", "br"}, "authorization": []string{"Bearer " + bearer}},
+	// 	Header: http.Header{"user-agent": []string{"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36"}, "accept-encoding": []string{"gzip", "deflate", "br"}},
 	// }
 	// resp, err = client.Do(request)
 	// if err != nil {
 	// 	return "", err
 	// }
+	request := &http.Request{
+		Method: "POST",
+		URL:    url,
+		Header: http.Header{"user-agent": []string{"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36"}, "accept-encoding": []string{"gzip", "deflate", "br"}, "authorization": []string{"Bearer " + bearer}, "cookie": []string{"personalization_id=\"" + personalization_id + "\"; guest_id=" + guest_id}},
+	}
+	resp, err = client.Do(request)
+	if err != nil {
+		return "", err
+	}
+
+	res, err := gzip.NewReader(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	defer res.Close()
+	r, err := ioutil.ReadAll(res)
+	if err != nil {
+		return "", err
+	}
+	logger.Info(string(r))
+
+	var gt Gt
+	if err := json.Unmarshal(r, &gt); err != nil {
+		return "", err
+	}
+
+	logger.Infoln(gt.GuestToken)
 
 	// Get video parameters
 	time.Sleep(time.Millisecond * 100)
-	url, _ := url.Parse("https://api.twitter.com/1.1/videos/tweet/config/" + id + ".json")
-	request := &http.Request{
+	url, _ = url.Parse("https://api.twitter.com/1.1/videos/tweet/config/" + id + ".json")
+	request = &http.Request{
 		Method: "GET",
 		URL:    url,
-		Header: http.Header{"user-agent": []string{"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36"}, "accept-encoding": []string{"gzip", "deflate", "br"}, "origin": []string{"https://twitter.com"}, "x-guest-token": []string{"1098316853645111296"}, "referer": []string{"https://twitter.com/i/videos/tweet/" + id}, "authorization": []string{"Bearer " + bearer}},
+		Header: http.Header{"user-agent": []string{"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36"}, "accept-encoding": []string{"gzip", "deflate", "br"}, "origin": []string{"https://twitter.com"}, "x-guest-token": []string{gt.GuestToken}, "referer": []string{"https://twitter.com/i/videos/tweet/" + id}, "authorization": []string{"Bearer " + bearer}},
 	}
 	resp, err = client.Do(request)
 	if err != nil {
